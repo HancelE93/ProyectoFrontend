@@ -7,27 +7,40 @@ function Navbar() {
     const token = localStorage.getItem("token");
     const rol = localStorage.getItem("rol");
 
+    if (!token) return null;
+
     const logout = async () => {
 
-        await fetch("http://localhost:8080/api/auth/logout", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        try {
+            await fetch("http://localhost:8080/api/auth/logout", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+        } catch (e) {
+            console.log("Logout error:", e);
+        }
 
         localStorage.clear();
         navigate("/");
     };
 
     return (
-        <nav>
+        <nav style={{
+            display: "flex",
+            gap: "10px",
+            padding: "10px",
+            background: "rgba(0,0,0,0.3)",
+            backdropFilter: "blur(10px)",
+            color: "white"
+        }}>
 
             <button onClick={() => navigate("/proyectos")}>
-                Ver Proyectos
+                Proyectos
             </button>
 
-            {rol === "ROLE_ADMIN" && (
+            {rol === "ADMIN" && (
                 <>
                     <button onClick={() => navigate("/crear-proyecto")}>
                         Crear Proyecto

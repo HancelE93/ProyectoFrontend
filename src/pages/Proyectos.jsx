@@ -3,80 +3,76 @@ import { useEffect, useState } from "react";
 function Proyectos() {
 
     const [proyectos, setProyectos] = useState([]);
+
     const [nombre, setNombre] = useState("");
     const [descripcion, setDescripcion] = useState("");
     const [fechaInicio, setFechaInicio] = useState("");
 
     const [mostrarModal, setMostrarModal] = useState(false);
 
+    const [editando, setEditando] = useState(false);
+    const [idEditar, setIdEditar] = useState(null);
+
     const rol = localStorage.getItem("rol")?.trim();
 
     // =========================
-    // CARGAR PROYECTOS
+    // LISTAR
     // =========================
     const cargarProyectos = async () => {
-
-        try {
-            const token = localStorage.getItem("token");
-
-            const res = await fetch("http://localhost:8080/api/proyectos/", {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (!res.ok) {
-                console.log("Error HTTP:", res.status);
-                return;
-            }
-
-            const data = await res.json();
-            setProyectos(data);
-
-        } catch (error) {
-            console.log("Error:", error);
-        }
-    };
-
-    // =========================
-    // CREAR PROYECTO
-    // =========================
-    const crearProyecto = async () => {
-
-        if (!nombre.trim()) {
-            alert("El nombre es obligatorio");
-            return;
-        }
 
         const token = localStorage.getItem("token");
 
         const res = await fetch("http://localhost:8080/api/proyectos/", {
-            method: "POST",
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+        setProyectos(data);
+    };
+
+    // =========================
+    // GUARDAR (CREAR / EDITAR)
+    // =========================
+    const guardarProyecto = async () => {
+
+        const token = localStorage.getItem("token");
+
+        const payload = {
+            nombre,
+            descripcion,
+            fechaInicio: fechaInicio || new Date().toISOString().split("T")[0]
+        };
+
+        let url = "http://localhost:8080/api/proyectos/";
+        let method = "POST";
+
+        if (editando) {
+            url = `http://localhost:8080/api/proyectos/${idEditar}`;
+            method = "PUT";
+        }
+
+        const res = await fetch(url, {
+            method,
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({
-                nombre,
-                descripcion,
-                fechaInicio: fechaInicio || new Date().toISOString().split("T")[0]
-            })
+            body: JSON.stringify(payload)
         });
 
         if (res.ok) {
-            setNombre("");
-            setDescripcion("");
-            setFechaInicio("");
-            setMostrarModal(false);
+            limpiarModal();
             cargarProyectos();
         } else {
-            console.log("Error al crear proyecto");
+            console.log("Error al guardar");
         }
     };
 
     // =========================
-    // ELIMINAR PROYECTO
+    // ELIMINAR
     // =========================
     const eliminarProyecto = async (id) => {
 
@@ -91,95 +87,117 @@ function Proyectos() {
 
         if (res.ok) {
             cargarProyectos();
-        } else {
-            console.log("Error al eliminar");
         }
     };
 
     // =========================
-    // USEEFFECT
+    // EDITAR
     // =========================
+    const abrirEditar = (p) => {
+        setNombre(p.nombre);
+        setDescripcion(p.descripcion);
+        setFechaInicio(p.fechaInicio);
+
+        setIdEditar(p.id);
+        setEditando(true);
+        setMostrarModal(true);
+    };
+
+    // =========================
+    // NUEVO
+    // =========================
+    const abrirNuevo = () => {
+        limpiarModal();
+        setMostrarModal(true);
+    };
+
+    // =========================
+    // LIMPIAR
+    // =========================
+    const limpiarModal = () => {
+        setNombre("");
+        setDescripcion("");
+        setFechaInicio("");
+
+        setEditando(false);
+        setIdEditar(null);
+        setMostrarModal(false);
+    };
+
     useEffect(() => {
         cargarProyectos();
     }, []);
 
     return (
-        <div style={{ padding: "20px" }}>
+        <div className="proyectos-page">
 
-            <h2>Proyectos</h2>
+            {/* HEADER */}
+            <div className="header-peliculas">
 
-            {/* BOTÓN ADMIN */}
-            {rol === "ADMIN" && (
-                <button onClick={() => setMostrarModal(true)}>
-                    + Nuevo Proyecto
-                </button>
-            )}
+                <div className="header-texto">
+                    <h1>Proyectos</h1>
+                    <p>Gestión moderna de proyectos</p>
+                </div>
 
-            <br /><br />
+                {rol === "ADMIN" && (
+                    <div className="header-actions">
+                        <button className="btn-nueva" onClick={abrirNuevo}>
+                            + Nuevo Proyecto
+                        </button>
+                    </div>
+                )}
+            </div>
 
-            {/* TABLA */}
-            <table border="1" cellPadding="10">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Fecha Inicio</th>
-                        {rol === "ADMIN" && <th>Acciones</th>}
-                    </tr>
-                </thead>
+            {/* CARDS */}
+            <div className="peliculas-grid">
 
-                <tbody>
-                    {proyectos.length === 0 ? (
-                        <tr>
-                            <td colSpan={rol === "ADMIN" ? 5 : 4}>
-                                No hay proyectos
-                            </td>
-                        </tr>
-                    ) : (
-                        proyectos.map((p) => (
-                            <tr key={p.id}>
-                                <td>{p.id}</td>
-                                <td>{p.nombre}</td>
-                                <td>{p.descripcion}</td>
-                                <td>{p.fechaInicio}</td>
+                {proyectos.map((p) => (
+                    <div key={p.id} className="pelicula-card">
 
-                                {rol === "ADMIN" && (
-                                    <td>
-                                        <button onClick={() => eliminarProyecto(p.id)}>
-                                            Eliminar
-                                        </button>
-                                    </td>
-                                )}
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
+                        <div className="pelicula-info">
+                            <h3>{p.nombre}</h3>
+                            <p>{p.descripcion}</p>
+                            <small>{p.fechaInicio}</small>
+                        </div>
 
-            {/* =========================
-                MODAL
-            ========================= */}
+                        {rol === "ADMIN" && (
+                            <div className="pelicula-buttons">
+
+                                <button
+                                    className="btn-edit"
+                                    onClick={() => abrirEditar(p)}
+                                >
+                                    Editar
+                                </button>
+
+                                <button
+                                    className="btn-delete"
+                                    onClick={() => eliminarProyecto(p.id)}
+                                >
+                                    Eliminar
+                                </button>
+
+                            </div>
+                        )}
+
+                    </div>
+                ))}
+
+            </div>
+
+            {/* MODAL */}
             {mostrarModal && (
-                <div style={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: "rgba(0,0,0,0.5)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center"
-                }}>
-                    <div style={{
-                        background: "white",
-                        padding: "20px",
-                        borderRadius: "10px",
-                        width: "350px"
-                    }}>
+                <div className="modal-bg">
 
-                        <h3>Nuevo Proyecto</h3>
+                    <div className="modal-form">
+
+                        <button className="modal-close" onClick={limpiarModal}>
+                            ✕
+                        </button>
+
+                        <h2>
+                            {editando ? "Editar Proyecto" : "Nuevo Proyecto"}
+                        </h2>
 
                         <input
                             placeholder="Nombre"
@@ -187,15 +205,11 @@ function Proyectos() {
                             onChange={(e) => setNombre(e.target.value)}
                         />
 
-                        <br /><br />
-
-                        <input
+                        <textarea
                             placeholder="Descripción"
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
                         />
-
-                        <br /><br />
 
                         <input
                             type="date"
@@ -203,15 +217,17 @@ function Proyectos() {
                             onChange={(e) => setFechaInicio(e.target.value)}
                         />
 
-                        <br /><br />
+                        <div className="modal-actions">
 
-                        <button onClick={crearProyecto}>
-                            Guardar
-                        </button>
+                            <button className="btn-save" onClick={guardarProyecto}>
+                                {editando ? "Actualizar" : "Guardar"}
+                            </button>
 
-                        <button onClick={() => setMostrarModal(false)}>
-                            Cancelar
-                        </button>
+                            <button className="btn-cancel" onClick={limpiarModal}>
+                                Cancelar
+                            </button>
+
+                        </div>
 
                     </div>
                 </div>

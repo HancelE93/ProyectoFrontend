@@ -18,9 +18,7 @@ function Login() {
         try {
             const res = await fetch("http://localhost:8080/api/auth/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })
             });
 
@@ -30,16 +28,10 @@ function Login() {
                 throw new Error(data.message || "Credenciales incorrectas");
             }
 
-            // 🔐 guardar token
             localStorage.setItem("token", data.token);
 
-            // 🔐 sacar rol del JWT
             const payload = JSON.parse(atob(data.token.split(".")[1]));
             localStorage.setItem("rol", payload.rol);
-
-            // limpiar inputs
-            setUsername("");
-            setPassword("");
 
             navigate("/proyectos");
 
@@ -51,30 +43,53 @@ function Login() {
     };
 
     return (
-        <div>
-            <h2>Login</h2>
+        <div className="login-page">
 
-            <form onSubmit={manejarLogin}>
+            {/* IZQUIERDA */}
+            <div className="login-left">
 
-                <input
-                    placeholder="Usuario"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
+                <h1 className="login-title">Bienvenido</h1>
+                <p className="login-subtitle">
+                    Inicia sesión para gestionar tus proyectos
+                </p>
 
-                <input
-                    type="password"
-                    placeholder="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
+                <form className="login-form" onSubmit={manejarLogin}>
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                    <input
+                        placeholder="Usuario"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
 
-                <button disabled={loading}>
-                    {loading ? "Ingresando..." : "Ingresar"}
-                </button>
-            </form>
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+
+                    {error && <p className="login-error">{error}</p>}
+
+                    <button disabled={loading}>
+                        {loading ? "Ingresando..." : "Iniciar Sesión"}
+                    </button>
+
+                </form>
+
+            </div>
+
+            {/* DERECHA */}
+            <div className="login-right">
+
+                <div className="login-image-box">
+                    <img
+                        src="https://illustrations.popsy.co/gray/work-from-home.svg"
+                        alt="login"
+                    />
+                </div>
+
+            </div>
+
         </div>
     );
 }
