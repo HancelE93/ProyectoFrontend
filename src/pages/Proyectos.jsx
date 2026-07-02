@@ -151,8 +151,15 @@ function Proyectos() {
             {/* CARDS */}
             <div className="peliculas-grid">
 
-                {proyectos.map((p) => (
-                    <div key={p.id} className="pelicula-card">
+                {proyectos.map((p, index) => (
+                    <div
+                        key={p.id}
+                        className={`pelicula-card ${index % 4 === 0 ? "card-blue" :
+                                index % 4 === 1 ? "card-purple" :
+                                    index % 4 === 2 ? "card-green" :
+                                        "card-amber"
+                            }`}
+                    >
 
                         <div className="pelicula-info">
                             <h3>{p.nombre}</h3>
